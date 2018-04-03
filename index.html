@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>天气</title>
+	<link rel="stylesheet" href="css/public.css">
+	<link rel="stylesheet" href="css/weatherapp.css">
+	<script src="js/rem.js"></script>
+	<link rel="icon" href="img/logo.ico" type="image/x-icon">
+	 <meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+</head>
+<body>
+    <!-- 当前信息 -->
+	<section id="now">
+	
+	</section>
+	<!-- 未来两天信息 -->
+	<section id="future">
+	
+	</section>
+	<!-- 未来24小时 -->
+	<ul id="hours">
+	
+	</ul>
+	<!-- 未来一周 -->
+	<ul id="yizhou">
+	
+	</ul>
+
+
+	<main id="citys">
+		<header>
+			<input type="text" class="search" placeholder="请输入区域">
+			<h2 class="btn">确定</h2>
+		</header>
+		<ul id="hot">
+		
+		</ul>
+		
+	</main>
+</body>
+<script src="js/jquery3.2.1.min.js"></script>
+<script>
+function getweather(city){
+	$.ajax({
+		url:"http://api.jisuapi.com/weather/query?appkey=3eaa4a114b0de878&city="+city,
+		dataType:"jsonp",
+		success:function(r){
+          let data=r.result;
+          let str="";
+         
+          	str+=`	<h1 class="now_city"><span class="address_icon">&lt;</span><span class="now_city_name">${data.city}</span></h1>
+          	<div class="now_air"><h1>空气</h1><h2>${data.aqi.quality}</h2></div>
+          	<h2 class="now_temp"><span>${data.hourly[0].temp}</span>°</h2>
+          	<h2 class="now_zhuangk">${data.weather}</h2><div class="windy"><span class="windy_doc">${data.winddirect} </span><span class="windy_num">${data.windpower}</span></div>
+          	<p class="ding">${data.index[6].detail}</p>`
+         
+          
+          let strjm="";
+          strjm+=`<div class="future_box today" > 
+ 			<div class="future_top">
+ 				<span class="future_date">今天</span>
+ 				<p><span class="tody_higtemp">${data.daily[0].day.temphigh}</span>/<span class="tody_lowtemp">${data.daily[0].night.templow}</span>°C</p>
+ 			</div>
+ 			<div class="future_top">
+ 				<span class="tody_weather">${data.daily[0].day.weather}</span>
+ 				<div class="tody_img"><img src="img/${data.daily[0].day.img}.png" alt=""></div>
+ 			</div>
+ 			</div>
+ 			<div class="future_box tomorrow" > 
+ 			<div class="future_top">
+ 				<span class="future_date">明天</span>
+ 				<p><span class="tomorrow_higtemp">${data.daily[1].day.temphigh}</span>/<span class="tomorrow_lowtemp">${data.daily[1].night.templow}</span>°C</p>
+ 			</div>
+ 			<div class="future_top">
+ 				<span class="tody_weather">${data.daily[1].day.weather}</span>
+ 				<div class="tomorrow_img"><img src="img/${data.daily[1].day.img}.png" alt=""></div>
+ 			</div>`
+            
+            let datah=r.result.hourly;
+ 			let strh="";
+ 			$.each(datah,function(index,el){
+          	strh+=`<li>
+			<h1 class="hours_time">${el.time}</h1>
+			<div class="hours_img"><img src="img/${el.img}.png" alt=""></div>
+			<h2 class="hours_temp"><span>${el.temp}</span>°</h2>
+			</li>`
+         
+      		})
+
+            let dataw=r.result.daily;
+ 			let strw="";
+ 			$.each(dataw,function(index,el){
+ 				let date=el.date.slice(5);
+          	strw+=`<li >
+			<h1 class="yizhou_date">${date}</h1>
+			<h1 class="yizhou_qingk">${el.day.weather}</h1>
+			<div class="yizhou_img"><img src="img/${el.day.img}.png" alt=""></div>
+			<h1 class="yizhou_temptop">${el.day.temphigh}</h1>
+			<h1 class="yizhou_templow">${el.night.templow}</h1>
+			<h1 class="yizhou_win">${el.day.winddirect}</h1>
+			<h1 class="yizhou_winnum">${el.day.windpower}</h1>
+		</li>`
+     	 })
+ 		  $("#now").html(str);
+          $("#future").html(strjm);
+          $("#hours").html(strh);
+          $("#yizhou").html(strw);
+		}
+
+	})
+}
+	var data=[];
+	var province=[];
+	var city=[];
+	$.ajax({
+		url:"http://api.jisuapi.com/weather/city?appkey=3eaa4a114b0de878&",
+		dataType:"jsonp",
+		success:function(r){
+            data=r.result;
+            province=$.grep(data,function(val,index){
+              if(val.parentid==="0"){
+              	return true;
+              }
+            })
+            let str="";
+           	 $.each(province,function(index, el) {
+            	str+=`<li class="province" id="${el.cityid}">${el.city}</li>`;
+               });
+            $("#hot").html(str);
+		}
+	})
+	$("#hot").on("click",".province",function(){
+		let id=$(this).attr("id");
+		// console.log(id);
+		city=$.grep(data,function(val,index){
+            if(val.parentid===id){
+            	return true;
+            }
+		})
+		$("#hot").empty();
+		let str="";
+		 $.each(city,function(index, el) {
+            	str+=`<li class="city">${el.city}</li>`;
+
+           });
+            $("#hot").html(str);
+	})
+	$("#hot").on("click",".city",function(){
+		$("#citys").hide();
+		getweather($(this).html());
+	})
+</script>
+</html>
